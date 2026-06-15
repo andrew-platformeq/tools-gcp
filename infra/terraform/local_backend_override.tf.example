@@ -1,0 +1,9 @@
+# First-bootstrap only: use local state until the GCS state bucket exists.
+# Delete this file after migrating state:
+#   terraform init -backend-config=backend.hcl -migrate-state
+
+terraform {
+  backend "local" {
+    path = "terraform.tfstate"
+  }
+}

@@ -1,0 +1,23 @@
+project_id  = "tools-non-prod"
+region      = "us-central1"
+developers = [
+  "user:andrew@platformeq.com",
+  "user:leo@platformeq.com",
+]
+environment = "nonprod"
+app_name    = "tools-gcp"
+
+# Set true when the project is under a GCP organization (blocks SA key creation/upload).
+enforce_no_sa_keys = false # standalone project
+# enforce_no_sa_keys = true # project under a GCP org
+
+# --- Alerting (Pillar 2) ---
+# Email for budget + Cloud Run alerts. Leave blank to skip alerting entirely.
+alert_email = "andrew@platformeq.com"
+
+# --- Financial guardrails (Pillar 1) ---
+# Budget is created only when billing_account is set. Applying it needs
+# billing-account admin rights — usually the org/billing admin, not the dev
+# account. Leave blank to skip the budget.
+billing_account = "" # e.g. "01ABCD-2345EF-6789GH"
+budget_amount   = 50 # monthly USD; alerts at 50/90/100% + forecast

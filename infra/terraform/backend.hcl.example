@@ -1,0 +1,5 @@
+# Copy to backend.hcl and run: terraform init -backend-config=backend.hcl -migrate-state
+# Bucket name must match the terraform_state bucket created by the first apply.
+
+bucket = "tools-non-prod-terraform-state"
+prefix = "terraform/state"

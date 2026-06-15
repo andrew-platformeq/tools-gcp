@@ -1,0 +1,6 @@
+# Pinned deps for Docker builds and pip-only installs.
+# Full project metadata lives in pyproject.toml.
+google-cloud-secret-manager>=2.16.0
+google-auth>=2.20.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0

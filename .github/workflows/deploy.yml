@@ -1,0 +1,52 @@
+name: Deploy
+
+# Keyless deploy to Cloud Run on merge to main, authenticating via Workload
+# Identity Federation (no service-account JSON key). The WIF provider and
+# deployer SA are created in infra/terraform/wif.tf; the values below are the
+# `terraform output` values (wif_provider / github_deployer_sa).
+on:
+  push:
+    branches: [main]
+
+# id-token: write is required for GitHub to mint the OIDC token WIF exchanges.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: tools-non-prod
+  REGION: us-central1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate to GCP (keyless, WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          # After bootstrap: terraform -chdir=infra/terraform output wif_provider
+          # and github_deployer_sa — paste those values here.
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GITHUB_DEPLOYER_SA }}
+          # Required so gcloud uses tools-non-prod as the quota/billing project for
+          # serviceusage.services.use (without this, builds submit 403s on _cloudbuild).
+          project_id: tools-non-prod
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: tools-non-prod
+
+      - name: Verify GCP identity
+        run: |
+          gcloud auth list
+          gcloud config get-value project
+          gcloud storage buckets describe "gs://${PROJECT_ID}_cloudbuild" --format='value(name)'
+
+      - name: Build + deploy to Cloud Run
+        run: make deploy-ci PROJECT_ID=$PROJECT_ID REGION=$REGION
+        # Uses Docker push to Artifact Registry instead of gcloud builds submit.
+        # WIF + builds submit 403s on the _cloudbuild staging bucket; docker push works.
