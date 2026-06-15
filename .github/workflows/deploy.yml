@@ -14,7 +14,7 @@ permissions:
   id-token: write
 
 env:
-  PROJECT_ID: tools-non-prod
+  PROJECT_ID: peq-tools
   REGION: us-central1
 
 jobs:
@@ -31,14 +31,14 @@ jobs:
           # and github_deployer_sa — paste those values here.
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.GITHUB_DEPLOYER_SA }}
-          # Required so gcloud uses tools-non-prod as the quota/billing project for
+          # Required so gcloud uses peq-tools as the quota/billing project for
           # serviceusage.services.use (without this, builds submit 403s on _cloudbuild).
-          project_id: tools-non-prod
+          project_id: peq-tools
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: tools-non-prod
+          project_id: peq-tools
 
       - name: Verify GCP identity
         run: |

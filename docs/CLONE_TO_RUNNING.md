@@ -7,7 +7,7 @@ Acceptance test: a fresh checkout builds and runs in non-prod with **no secrets 
 - [ ] macOS or Linux (Windows via WSL2)
 - [ ] Python 3.11+
 - [ ] [gcloud CLI](https://cloud.google.com/sdk/docs/install)
-- [ ] Access to GCP project `tools-non-prod` (scoped IAM)
+- [ ] Access to GCP project `peq-tools` (scoped IAM)
 - [ ] GitHub access to `andrew-platformeq/tools-gcp`
 
 ## Checklist
@@ -24,7 +24,7 @@ cd tools-gcp
 ```bash
 gcloud auth login
 gcloud auth application-default login
-gcloud config set project tools-non-prod
+gcloud config set project peq-tools
 ```
 
 Verify no credential files in the repo:
@@ -68,7 +68,7 @@ Expected `/health`:
 ```json
 {
   "status": "ok",
-  "project": "tools-non-prod",
+  "project": "peq-tools",
   "environment": "nonprod"
 }
 ```

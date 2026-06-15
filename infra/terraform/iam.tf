@@ -31,7 +31,7 @@ resource "google_project_iam_member" "cloudbuild_editor" {
 }
 
 # serviceusage.services.use — required for ADC quota project and local SDK calls
-# (gcloud auth application-default set-quota-project tools-non-prod).
+# (gcloud auth application-default set-quota-project peq-tools).
 resource "google_project_iam_member" "developer_service_usage" {
   for_each = local.developers
 

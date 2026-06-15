@@ -17,10 +17,10 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         return cls(
-            gcp_project=os.environ.get("TOOLS_GCP_PROJECT", "tools-non-prod"),
+            gcp_project=os.environ.get("TOOLS_GCP_PROJECT", "peq-tools"),
             gcp_region=os.environ.get("TOOLS_GCP_REGION", "us-central1"),
             secret_name=os.environ.get(
-                "TOOLS_SECRET_NAME", "tools-non-prod-app-config"
+                "TOOLS_SECRET_NAME", "peq-tools-app-config"
             ),
             environment=os.environ.get("TOOLS_ENVIRONMENT", "nonprod"),
             skip_gcp=os.environ.get("TOOLS_SKIP_GCP", "").lower() in ("1", "true", "yes"),

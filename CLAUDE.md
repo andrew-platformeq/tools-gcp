@@ -40,8 +40,8 @@ Endpoints: `/health` (liveness, no GCP) and `/ready` (checks Secret Manager unle
 
 ## GCP & config
 
-- Project ID is **`tools-non-prod`** (region `us-central1`). Secret container:
-  `tools-non-prod-app-config`. These are the live defaults in `config.py`.
+- Project ID is **`peq-tools`** (region `us-central1`). Secret container:
+  `peq-tools-app-config`. These are the live defaults in `config.py`.
 - Settings come from `TOOLS_*` env vars: `TOOLS_GCP_PROJECT`,
   `TOOLS_GCP_REGION`, `TOOLS_SECRET_NAME`, `TOOLS_ENVIRONMENT`,
   `TOOLS_SKIP_GCP`.
@@ -54,9 +54,9 @@ Endpoints: `/health` (liveness, no GCP) and `/ready` (checks Secret Manager unle
 | Cloud Run | Attached runtime service account identity |
 | GitHub CI | GCP intentionally skipped (`TOOLS_SKIP_GCP=1`); lint + unit tests only |
 
-Local dev and Cloud Run talk to **real** `tools-non-prod` GCP. To connect locally
+Local dev and Cloud Run talk to **real** `peq-tools` GCP. To connect locally
 the first time: `gcloud auth application-default login` then
-`gcloud config set project tools-non-prod` — after that `/ready` reaches Secret
+`gcloud config set project peq-tools` — after that `/ready` reaches Secret
 Manager and returns `secret_configured: true`.
 
 `TOOLS_SKIP_GCP=1` is a deliberate offline switch for **unit tests and

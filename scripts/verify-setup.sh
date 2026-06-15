@@ -75,7 +75,7 @@ if command -v gcloud >/dev/null; then
   if [ -n "$PROJECT" ] && [ "$PROJECT" != "(unset)" ]; then
     ok "gcloud project set to: $PROJECT"
   else
-    note "gcloud project not set — run: gcloud config set project tools-non-prod"
+    note "gcloud project not set — run: gcloud config set project peq-tools"
   fi
 else
   bad "Skipping GCP auth checks (gcloud missing)"

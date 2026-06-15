@@ -6,7 +6,7 @@ Bootstrap guide for the **non-prod** GCP project. Production is out of scope.
 
 | Resource | Purpose |
 |----------|---------|
-| GCP project `tools-non-prod` | Isolated non-prod boundary |
+| GCP project `peq-tools` | Isolated non-prod boundary |
 | Enabled APIs | Run, Secret Manager, GCS, BigQuery, Artifact Registry, Cloud Build, Org Policy |
 | IAM for developers | Resource-scoped roles on bucket, secret, registry, Cloud Run SA |
 | GCS dev sandbox bucket | Dev artifact / data scratch space (`force_destroy` enabled) |
@@ -29,7 +29,7 @@ Okta-to-GCP federation is **Phase 2** — user IAM binding via Google account is
 Week-1 critical path if the project does not exist:
 
 ```bash
-export PROJECT_ID=tools-non-prod
+export PROJECT_ID=peq-tools
 export BILLING_ACCOUNT=<billing-account-id>
 export REGION=us-central1
 
@@ -138,7 +138,7 @@ terraform destroy   # tears down resources; does NOT delete the project
 To remove the project entirely (admin only):
 
 ```bash
-gcloud projects delete tools-non-prod
+gcloud projects delete peq-tools
 ```
 
 ## Scope Boundary

@@ -363,7 +363,7 @@ def build_pdf() -> None:
     pdf.h2("1.2  The Zero-Secrets Invariant")
     pdf.body(
         "Every design decision in this repo flows from one rule: secret VALUES never touch disk "
-        "inside the repo. Secret NAMES (like 'tools-non-prod-app-config') are fine in code "
+        "inside the repo. Secret NAMES (like 'peq-tools-app-config') are fine in code "
         "and config -- they are not sensitive. The distinction is critical."
     )
     pdf.table_header([("Item", 55), ("Allowed in repo?", 40), ("Why", 95)])
@@ -394,9 +394,9 @@ def build_pdf() -> None:
                       |  ADC credentials (never leaves keychain)
                       v
   +---------------------------------------------------------------+
-  |                   GCP PROJECT (tools-non-prod)            |
+  |                   GCP PROJECT (peq-tools)            |
   |                                                               |
-  |  Secret Manager <- app reads 'tools-non-prod-app-config'  |
+  |  Secret Manager <- app reads 'peq-tools-app-config'  |
   |  Cloud Run      <- make deploy pushes Docker image here       |
   |  Artifact Reg.  <- Docker image is stored here first          |
   |  Cloud Build    <- builds the Docker image from source        |
@@ -444,9 +444,9 @@ def build_pdf() -> None:
     pdf.code_block("""\
   @dataclass(frozen=True)          # 'frozen' means it's immutable after creation
   class Settings:
-      gcp_project: str             # e.g. "tools-non-prod"
+      gcp_project: str             # e.g. "peq-tools"
       gcp_region:  str             # e.g. "us-central1"
-      secret_name: str             # e.g. "tools-non-prod-app-config"
+      secret_name: str             # e.g. "peq-tools-app-config"
       environment: str             # e.g. "nonprod"
       skip_gcp:    bool            # True when TOOLS_SKIP_GCP=1
 
@@ -464,9 +464,9 @@ def build_pdf() -> None:
         "The five environment variables this module reads (all set in .env.example with defaults):"
     )
     pdf.table_header([("Variable", 75), ("Default", 60), ("Purpose", 55)])
-    pdf.table_row(["TOOLS_GCP_PROJECT", "tools-non-prod", "Which GCP project to use"])
+    pdf.table_row(["TOOLS_GCP_PROJECT", "peq-tools", "Which GCP project to use"])
     pdf.table_row(["TOOLS_GCP_REGION", "us-central1", "Which GCP region"])
-    pdf.table_row(["TOOLS_SECRET_NAME", "tools-non-prod-app-config", "Secret to read for /ready"])
+    pdf.table_row(["TOOLS_SECRET_NAME", "peq-tools-app-config", "Secret to read for /ready"])
     pdf.table_row(["TOOLS_ENVIRONMENT", "nonprod", "Label shown in /health response"])
     pdf.table_row(["TOOLS_SKIP_GCP", "(unset)", "Set to 1 to skip all GCP API calls"])
     pdf.ln(3)
@@ -479,7 +479,7 @@ def build_pdf() -> None:
   get_secret(secret_name, *, settings) -> str
       # Fetches the LATEST version of a secret from Secret Manager.
       # Builds the full resource path:
-      #   projects/tools-non-prod/secrets/tools-non-prod-app-config/versions/latest
+      #   projects/peq-tools/secrets/peq-tools-app-config/versions/latest
       # Returns the secret VALUE as a decoded string.
 
   secret_is_accessible(*, settings) -> bool
@@ -514,7 +514,7 @@ def build_pdf() -> None:
     )
     pdf.code_block("""\
   GET /health
-      Returns: {"status": "ok", "project": "tools-non-prod", "environment": "nonprod"}
+      Returns: {"status": "ok", "project": "peq-tools", "environment": "nonprod"}
       GCP calls: NONE. This endpoint always succeeds regardless of cloud auth.
       Used for: Cloud Run liveness probe, quick sanity check.
 
@@ -656,7 +656,7 @@ def build_pdf() -> None:
     pdf.h2("3.2  variables.tf -- Input Variables")
     pdf.body(
         "Variables make Terraform reusable across environments. Instead of hardcoding "
-        "'tools-non-prod' everywhere, you set it once in terraform.tfvars."
+        "'peq-tools' everywhere, you set it once in terraform.tfvars."
     )
     pdf.table_header([("Variable", 40), ("Type", 22), ("Default", 45), ("Purpose", 83)])
     pdf.table_row(["project_id", "string", "(required)", "GCP project ID -- no default, must be set"])
@@ -753,12 +753,12 @@ def build_pdf() -> None:
         "After 'terraform apply', these values are printed to the terminal for easy reference:"
     )
     pdf.table_header([("Output", 60), ("Example value", 130)])
-    pdf.table_row(["project_id", "tools-non-prod"])
+    pdf.table_row(["project_id", "peq-tools"])
     pdf.table_row(["region", "us-central1"])
-    pdf.table_row(["dev_bucket", "tools-non-prod-dev-sandbox"])
-    pdf.table_row(["secret_name", "tools-non-prod-app-config"])
-    pdf.table_row(["cloud_run_service_account", "tools-gcp-run@tools-non-prod.iam.gserviceaccount.com"])
-    pdf.table_row(["artifact_registry", "us-central1-docker.pkg.dev/tools-non-prod/tools-gcp"])
+    pdf.table_row(["dev_bucket", "peq-tools-dev-sandbox"])
+    pdf.table_row(["secret_name", "peq-tools-app-config"])
+    pdf.table_row(["cloud_run_service_account", "tools-gcp-run@peq-tools.iam.gserviceaccount.com"])
+    pdf.table_row(["artifact_registry", "us-central1-docker.pkg.dev/peq-tools/tools-gcp"])
     pdf.ln(3)
 
     # ========================================================================
@@ -930,13 +930,13 @@ def build_pdf() -> None:
 
     pdf.body("What the script does, step by step:")
     pdf.code_block("""\
-  1. gcloud projects create tools-non-prod --name="Peq Non-Prod"
+  1. gcloud projects create peq-tools --name="Peq Non-Prod"
      (silently ignores 'project already exists' errors)
 
-  2. gcloud billing projects link tools-non-prod --billing-account=$BILLING_ACCOUNT
+  2. gcloud billing projects link peq-tools --billing-account=$BILLING_ACCOUNT
      (without billing, most GCP APIs are disabled)
 
-  3. gcloud config set project tools-non-prod
+  3. gcloud config set project peq-tools
 
   4. cd infra/terraform
      If terraform.tfvars doesn't exist: copies terraform.tfvars.example
@@ -984,7 +984,7 @@ def build_pdf() -> None:
   GCP authentication:
   [OK]  gcloud user authenticated (andrew@platformeq.com)
   [OK]  Application Default Credentials configured
-  [OK]  gcloud project set to: tools-non-prod
+  [OK]  gcloud project set to: peq-tools
 
   Python environment:
   !  .venv missing -- run: make install
@@ -1015,7 +1015,7 @@ def build_pdf() -> None:
   ./scripts/bootstrap-project.sh
 
   WHAT HAPPENS:
-  1. GCP project 'tools-non-prod' is created
+  1. GCP project 'peq-tools' is created
   2. Billing linked -> APIs can now be enabled
   3. Terraform enables 7 APIs (takes ~2-5 min each on first enable)
   4. Terraform creates: IAM bindings (7 roles for Andrew), GCS bucket,
@@ -1030,7 +1030,7 @@ def build_pdf() -> None:
   # One-time machine setup
   gcloud auth login                        # browser opens; sign in with Google account
   gcloud auth application-default login   # second browser auth for SDK credentials
-  gcloud config set project tools-non-prod
+  gcloud config set project peq-tools
 
   # Repo setup
   git clone https://github.com/andrew-platformeq/tools-gcp.git
@@ -1043,7 +1043,7 @@ def build_pdf() -> None:
 
   # Run locally
   make dev                               # starts uvicorn on :8080
-  curl http://localhost:8080/health      # -> {"status": "ok", "project": "tools-non-prod"}
+  curl http://localhost:8080/health      # -> {"status": "ok", "project": "peq-tools"}
   curl http://localhost:8080/ready       # -> {"status": "ready", "secret_configured": true}
 
   # CI passes? (same checks as GitHub Actions)
@@ -1054,13 +1054,13 @@ def build_pdf() -> None:
     pdf.code_block("""\
   make deploy
   # Internally runs:
-  # 1. gcloud builds submit --tag us-central1-docker.pkg.dev/tools-non-prod/tools-gcp/tools-gcp:latest
+  # 1. gcloud builds submit --tag us-central1-docker.pkg.dev/peq-tools/tools-gcp/tools-gcp:latest
   #    -> Cloud Build reads the Dockerfile, builds the image, pushes to Artifact Registry
   # 2. gcloud run deploy tools-gcp \\
   #      --image <artifact-registry-url> \\
   #      --region us-central1 \\
-  #      --service-account tools-gcp-run@tools-non-prod.iam.gserviceaccount.com \\
-  #      --set-env-vars "TOOLS_GCP_PROJECT=tools-non-prod,..."
+  #      --service-account tools-gcp-run@peq-tools.iam.gserviceaccount.com \\
+  #      --set-env-vars "TOOLS_GCP_PROJECT=peq-tools,..."
   #    -> Cloud Run creates a new revision; routes traffic to it
   # 3. Prints the Cloud Run service URL
 
@@ -1088,7 +1088,7 @@ def build_pdf() -> None:
         "Verify Terraform IAM was applied; check 'gcloud projects get-iam-policy'",
     ])
     pdf.table_row([
-        "Project not found: tools-non-prod",
+        "Project not found: peq-tools",
         "Project doesn't exist or wrong project set",
         "Ask Joe to run bootstrap-project.sh; run 'gcloud config set project ...'",
     ])
@@ -1174,15 +1174,15 @@ def build_pdf() -> None:
   # Add to versions.tf:
   terraform {
     backend "gcs" {
-      bucket = "tools-non-prod-tfstate"
+      bucket = "peq-tools-tfstate"
       prefix = "terraform/state"
     }
     ...
   }
 
   # Create the state bucket manually first (chicken-and-egg):
-  gsutil mb -p tools-non-prod -l us-central1 gs://tools-non-prod-tfstate
-  gsutil versioning set on gs://tools-non-prod-tfstate""",
+  gsutil mb -p peq-tools -l us-central1 gs://peq-tools-tfstate
+  gsutil versioning set on gs://peq-tools-tfstate""",
     label="Remote state backend (recommended addition to versions.tf)")
 
     pdf.callout(
@@ -1218,7 +1218,7 @@ def build_pdf() -> None:
   - uses: google-github-actions/auth@v2
     with:
       workload_identity_provider: projects/.../providers/github-provider
-      service_account: 'tools-gcp-deploy@tools-non-prod.iam.gserviceaccount.com'""",
+      service_account: 'tools-gcp-deploy@peq-tools.iam.gserviceaccount.com'""",
     label="Workload Identity Federation skeleton")
 
     pdf.h2("9.3  Separate Deploy Service Account from Dev IAM")
@@ -1309,9 +1309,9 @@ def build_pdf() -> None:
       build: .
       ports: ["8080:8080"]
       environment:
-        TOOLS_GCP_PROJECT: tools-non-prod
+        TOOLS_GCP_PROJECT: peq-tools
         TOOLS_GCP_REGION: us-central1
-        TOOLS_SECRET_NAME: tools-non-prod-app-config
+        TOOLS_SECRET_NAME: peq-tools-app-config
         TOOLS_ENVIRONMENT: nonprod
         TOOLS_SKIP_GCP: "1"   # for offline local testing
       volumes:
@@ -1385,9 +1385,9 @@ def build_pdf() -> None:
 
     pdf.h2("10.2  Environment Variables")
     pdf.table_header([("Variable", 65), ("Default", 55), ("Secret?", 22), ("Set where", 48)])
-    pdf.table_row(["TOOLS_GCP_PROJECT", "tools-non-prod", "No", ".env / Cloud Run"])
+    pdf.table_row(["TOOLS_GCP_PROJECT", "peq-tools", "No", ".env / Cloud Run"])
     pdf.table_row(["TOOLS_GCP_REGION", "us-central1", "No", ".env / Cloud Run"])
-    pdf.table_row(["TOOLS_SECRET_NAME", "tools-non-prod-app-config", "No", ".env / Cloud Run"])
+    pdf.table_row(["TOOLS_SECRET_NAME", "peq-tools-app-config", "No", ".env / Cloud Run"])
     pdf.table_row(["TOOLS_ENVIRONMENT", "nonprod", "No", ".env / Cloud Run"])
     pdf.table_row(["TOOLS_SKIP_GCP", "(unset)", "No", "CI / offline dev only"])
     pdf.table_row(["PORT", "8080", "No", "Cloud Run auto-sets this"])
@@ -1409,7 +1409,7 @@ def build_pdf() -> None:
   # Auth (run once per machine)
   gcloud auth login
   gcloud auth application-default login
-  gcloud config set project tools-non-prod
+  gcloud config set project peq-tools
 
   # Verify auth works
   gcloud auth list

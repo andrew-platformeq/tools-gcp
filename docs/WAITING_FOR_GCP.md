@@ -1,21 +1,21 @@
 # Waiting for GCP — Pre-Bootstrap Checklist
 
-Use this while the empty `tools-non-prod` project is being created.
+Use this while Terraform has not yet been applied to `peq-tools`.
 
-## What Joe needs to do (one time)
+## Project status
 
-1. Create project `tools-non-prod`
-2. Link billing to that project
-3. Grant you **Editor**: `user:andrew@platformeq.com`
+The GCP project **`peq-tools`** already exists. Remaining bootstrap steps:
 
-See [GCP_SETUP.md](./GCP_SETUP.md) for the exact commands.
+1. Confirm billing is linked to `peq-tools`
+2. Apply Terraform (see [GCP_SETUP.md](./GCP_SETUP.md))
+3. Add the first secret version and deploy
 
-## What you can do now (no GCP required)
+## What you can do now
 
 ```bash
 gcloud auth login
 gcloud auth application-default login
-gcloud config set project tools-non-prod
+gcloud config set project peq-tools
 
 make install
 cp .env.example .env
@@ -35,7 +35,7 @@ cp terraform.tfvars.example terraform.tfvars
 
 ```bash
 # Confirm access
-gcloud projects describe tools-non-prod
+gcloud projects describe peq-tools
 make verify
 
 # Bootstrap infrastructure (manual — see GCP_SETUP.md Step 2)

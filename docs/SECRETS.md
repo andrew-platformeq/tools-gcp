@@ -24,7 +24,7 @@ Cloud Run workloads use an **attached service account** — never a downloaded k
 # One-time per machine
 gcloud auth login
 gcloud auth application-default login
-gcloud config set project tools-non-prod
+gcloud config set project peq-tools
 ```
 
 Verify:
@@ -41,7 +41,7 @@ Application code uses Secret Manager via ADC:
 ```python
 from tools.secrets import get_secret
 
-value = get_secret("tools-non-prod-app-config")
+value = get_secret("peq-tools-app-config")
 ```
 
 Secret **names** are in code and docs. Secret **values** are set only in GCP Console or `gcloud secrets versions add`.
@@ -51,10 +51,10 @@ Secret **names** are in code and docs. Secret **values** are set only in GCP Con
 Terraform creates the **secret container** only (no value in Terraform state). Add the first version after apply:
 
 ```bash
-echo -n "dev-placeholder-rotate-me" | gcloud secrets versions add tools-non-prod-app-config --data-file=-
+echo -n "dev-placeholder-rotate-me" | gcloud secrets versions add peq-tools-app-config --data-file=-
 
 # Rotate later
-echo -n "new-value" | gcloud secrets versions add tools-non-prod-app-config --data-file=-
+echo -n "new-value" | gcloud secrets versions add peq-tools-app-config --data-file=-
 ```
 
 See [GCP_SETUP.md](./GCP_SETUP.md) for the full bootstrap flow.
@@ -76,9 +76,9 @@ Only **non-secret** configuration belongs in env vars:
 
 | Variable | Example | Secret? |
 |----------|---------|---------|
-| `TOOLS_GCP_PROJECT` | `tools-non-prod` | No |
+| `TOOLS_GCP_PROJECT` | `peq-tools` | No |
 | `TOOLS_GCP_REGION` | `us-central1` | No |
-| `TOOLS_SECRET_NAME` | `tools-non-prod-app-config` | No (name only) |
+| `TOOLS_SECRET_NAME` | `peq-tools-app-config` | No (name only) |
 | `PORT` | `8080` | No |
 
 See `.env.example` for the full list.

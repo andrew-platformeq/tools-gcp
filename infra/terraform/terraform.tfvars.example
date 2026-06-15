@@ -1,4 +1,4 @@
-project_id  = "tools-non-prod"
+project_id  = "peq-tools"
 region      = "us-central1"
 developers = [
   "user:andrew@platformeq.com",

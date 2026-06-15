@@ -110,7 +110,7 @@ def build_pdf() -> None:
         "from git clone to a live container quickly."
     )
     pdf.subsection_title("What remains blocked")
-    pdf.bullet("Creation of the GCP project tools-non-prod (org admin / Joe)")
+    pdf.bullet("Creation of the GCP project peq-tools (org admin / Joe)")
     pdf.bullet("Terraform apply against a live project")
     pdf.bullet("Full end-to-end acceptance pass including Cloud Run deploy")
     pdf.bullet("GitHub branch protection configuration (manual admin step in GitHub UI)")
@@ -328,7 +328,7 @@ def build_pdf() -> None:
     pdf.section_title("9. How Everything Fits Together")
     pdf.subsection_title("Week 1 sequence")
     pdf.body("1. Developer opens PR with docs, CI, app skeleton, Terraform (no GCP needed yet)")
-    pdf.body("2. Joe creates tools-non-prod and runs bootstrap-project.sh")
+    pdf.body("2. Joe creates peq-tools and runs bootstrap-project.sh")
     pdf.body("3. PR merges; CI is green; branch protection enforced")
     pdf.body("4. Developer runs clone-to-running checklist")
     pdf.body("5. make deploy pushes to Cloud Run; make smoke confirms /health and /ready")

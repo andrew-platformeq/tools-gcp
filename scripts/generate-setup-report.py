@@ -84,7 +84,7 @@ def build_pdf() -> None:
     pdf.multi_cell(
         0,
         6,
-        "A detailed record of how tools-non-prod was stood up: org admin steps, "
+        "A detailed record of how peq-tools was stood up: org admin steps, "
         "Terraform bootstrap, local testing, Cloud Run deploy, and fixes applied along the way.",
         align="C",
         new_x="LMARGIN",
@@ -93,7 +93,7 @@ def build_pdf() -> None:
     pdf.ln(14)
     pdf.set_font("Helvetica", "I", 10)
     pdf.set_text_color(100, 100, 100)
-    pdf.multi_cell(0, 6, "Project: tools-non-prod  |  Region: us-central1  |  June 2026", align="C")
+    pdf.multi_cell(0, 6, "Project: peq-tools  |  Region: us-central1  |  June 2026", align="C")
 
     # 1. Executive summary
     pdf.add_page()
@@ -110,10 +110,10 @@ def build_pdf() -> None:
         "make deploy, and make smoke against the live Cloud Run service."
     )
     pdf.subsection("Outcome")
-    pdf.bullet("GCP project tools-non-prod created under platformeq.com org with billing linked")
+    pdf.bullet("GCP project peq-tools created under platformeq.com org with billing linked")
     pdf.bullet("23+ Terraform resources applied (APIs, buckets, secret container, IAM, audit logging)")
-    pdf.bullet("Terraform state migrated to gs://tools-non-prod-terraform-state")
-    pdf.bullet("Secret tools-non-prod-app-config has a placeholder version (not in Terraform state)")
+    pdf.bullet("Terraform state migrated to gs://peq-tools-terraform-state")
+    pdf.bullet("Secret peq-tools-app-config has a placeholder version (not in Terraform state)")
     pdf.bullet("Cloud Run service tools-gcp deployed and reachable with gcloud identity token")
     pdf.bullet("Cloud Build IAM fixed so make deploy works without manual gcloud IAM commands")
 
@@ -131,10 +131,10 @@ def build_pdf() -> None:
         "Before any developer could run Terraform, the empty GCP project had to exist, "
         "billing had to be linked, and the developer needed Owner on the project."
     )
-    pdf.bullet("Create project with Project ID exactly tools-non-prod (must match Terraform)")
+    pdf.bullet("Create project with Project ID exactly peq-tools (must match Terraform)")
     pdf.bullet("Project display name: Peq Non-Prod; placed under company org folder")
     pdf.bullet("Link corporate billing account to the project")
-    pdf.bullet("Grant user:andrew@platformeq.com the Owner role on tools-non-prod")
+    pdf.bullet("Grant user:andrew@platformeq.com the Owner role on peq-tools")
     pdf.body(
         "Owner (or Editor) is required for the first terraform apply: enabling APIs, "
         "creating buckets, binding IAM, and creating service accounts."
@@ -151,11 +151,11 @@ def build_pdf() -> None:
     pdf.body("Two auth layers are required  - they serve different purposes:")
     pdf.bullet("gcloud auth login  - user identity for deploy, project admin, smoke tests")
     pdf.bullet("gcloud auth application-default login  - ADC for Python Secret Manager client")
-    pdf.bullet("gcloud config set project tools-non-prod")
-    pdf.bullet("gcloud auth application-default set-quota-project tools-non-prod")
+    pdf.bullet("gcloud config set project peq-tools")
+    pdf.bullet("gcloud auth application-default set-quota-project peq-tools")
     pdf.body(
         "After renaming the project from an earlier placeholder (platformeq-nonprod), "
-        "ADC had to be re-logged in so the quota project matched tools-non-prod. "
+        "ADC had to be re-logged in so the quota project matched peq-tools. "
         "make verify confirms 12 checks including auth and tooling."
     )
 
@@ -190,12 +190,12 @@ def build_pdf() -> None:
     pdf.section("4. Terraform Bootstrap (Manual Path  - Option A)")
     pdf.body(
         "bootstrap-project.sh is designed for org admins creating a project from scratch. "
-        "Because Joe had already created tools-non-prod and linked billing, the manual "
+        "Because Joe had already created peq-tools and linked billing, the manual "
         "Terraform path was used instead."
     )
     pdf.subsection("terraform.tfvars")
     pdf.code(
-        """project_id  = "tools-non-prod"
+        """project_id  = "peq-tools"
 region      = "us-central1"
 member      = "user:andrew@platformeq.com"
 environment = "nonprod"
@@ -220,9 +220,9 @@ terraform apply   # Apply complete: 23 added"""
 
     pdf.subsection("Resources created (23 initial resources)")
     pdf.bullet("8 APIs enabled (Run, Secret Manager, Storage, BigQuery, AR, Cloud Build, IAM, Org Policy)")
-    pdf.bullet("Buckets: tools-non-prod-dev-sandbox (force_destroy) and tools-non-prod-terraform-state (versioned)")
-    pdf.bullet("Secret container tools-non-prod-app-config (no value in Terraform)")
-    pdf.bullet("Service account tools-gcp-run@tools-non-prod.iam.gserviceaccount.com")
+    pdf.bullet("Buckets: peq-tools-dev-sandbox (force_destroy) and peq-tools-terraform-state (versioned)")
+    pdf.bullet("Secret container peq-tools-app-config (no value in Terraform)")
+    pdf.bullet("Service account tools-gcp-run@peq-tools.iam.gserviceaccount.com")
     pdf.bullet("Artifact Registry repo tools-gcp in us-central1")
     pdf.bullet("Scoped IAM for developer and Cloud Run runtime")
 
@@ -237,13 +237,13 @@ terraform apply   # Apply complete: 23 added"""
     pdf.code(
         """rm local_backend_override.tf
 cp backend.hcl.example backend.hcl
-# bucket = "tools-non-prod-terraform-state"
+# bucket = "peq-tools-terraform-state"
 terraform init -backend-config=backend.hcl -migrate-state"""
     )
 
     pdf.subsection("Add secret value (outside Terraform)")
     pdf.code(
-        'echo -n "dev-placeholder-rotate-me" | gcloud secrets versions add tools-non-prod-app-config --data-file=-'
+        'echo -n "dev-placeholder-rotate-me" | gcloud secrets versions add peq-tools-app-config --data-file=-'
     )
     pdf.body(
         "This aligns with SECRETS.md: Terraform owns the secret container; humans or gcloud "
@@ -258,7 +258,7 @@ curl http://localhost:8080/health
 curl http://localhost:8080/ready"""
     )
     pdf.body("Verified responses:")
-    pdf.bullet('/health: {"status":"ok","project":"tools-non-prod","environment":"nonprod"}')
+    pdf.bullet('/health: {"status":"ok","project":"peq-tools","environment":"nonprod"}')
     pdf.bullet('/ready: {"status":"ready","secret_configured":true}')
 
     # 6. Cloud Build fix
@@ -271,7 +271,7 @@ curl http://localhost:8080/ready"""
     )
     pdf.subsection("Error 1  - staging bucket access")
     pdf.body(
-        "gcloud uploads source to gs://tools-non-prod_cloudbuild/. The default compute "
+        "gcloud uploads source to gs://peq-tools_cloudbuild/. The default compute "
         "service account (894268831911-compute@developer.gserviceaccount.com) lacked "
         "storage.objects.get on that bucket."
     )
@@ -284,12 +284,12 @@ curl http://localhost:8080/ready"""
 
     pdf.subsection("Terraform fix  - cloudbuild.tf")
     pdf.body("Added infra/terraform/cloudbuild.tf with scoped IAM:")
-    pdf.bullet("storage.objectAdmin on tools-non-prod_cloudbuild for Cloud Build SA and compute SA")
+    pdf.bullet("storage.objectAdmin on peq-tools_cloudbuild for Cloud Build SA and compute SA")
     pdf.bullet("artifactregistry.writer on tools-gcp repo for both SAs")
     pdf.bullet("logging.logWriter at project level for build logs")
     pdf.body(
         "After terraform apply (+6 IAM resources), make deploy completed successfully. "
-        "Image: us-central1-docker.pkg.dev/tools-non-prod/tools-gcp/tools-gcp:latest"
+        "Image: us-central1-docker.pkg.dev/peq-tools/tools-gcp/tools-gcp:latest"
     )
 
     # 7. Cloud Run deploy and verification
@@ -302,10 +302,10 @@ curl http://localhost:8080/ready"""
     )
     pdf.code(
         """gcloud run deploy tools-gcp \\
-  --image us-central1-docker.pkg.dev/tools-non-prod/tools-gcp/tools-gcp:latest \\
-  --service-account tools-gcp-run@tools-non-prod.iam.gserviceaccount.com \\
+  --image us-central1-docker.pkg.dev/peq-tools/tools-gcp/tools-gcp:latest \\
+  --service-account tools-gcp-run@peq-tools.iam.gserviceaccount.com \\
   --no-allow-unauthenticated \\
-  --set-env-vars TOOLS_GCP_PROJECT=tools-non-prod,..."""
+  --set-env-vars TOOLS_GCP_PROJECT=peq-tools,..."""
     )
     pdf.body("Service URL (example): https://tools-gcp-894268831911.us-central1.run.app")
 
@@ -329,14 +329,14 @@ curl http://localhost:8080/ready"""
     pdf.table_row("roles/bigquery.user", "Project")
     pdf.table_row("roles/run.developer", "Project")
     pdf.table_row("roles/cloudbuild.builds.editor", "Project")
-    pdf.table_row("roles/storage.objectAdmin", "tools-non-prod-dev-sandbox + terraform-state buckets")
-    pdf.table_row("roles/secretmanager.secretAccessor", "tools-non-prod-app-config only")
+    pdf.table_row("roles/storage.objectAdmin", "peq-tools-dev-sandbox + terraform-state buckets")
+    pdf.table_row("roles/secretmanager.secretAccessor", "peq-tools-app-config only")
     pdf.table_row("roles/artifactregistry.writer", "tools-gcp repo only")
     pdf.table_row("roles/iam.serviceAccountUser", "tools-gcp-run SA only")
 
     pdf.subsection("Cloud Run runtime SA")
-    pdf.bullet("tools-gcp-run@tools-non-prod.iam.gserviceaccount.com")
-    pdf.bullet("secretAccessor on tools-non-prod-app-config only; no key file")
+    pdf.bullet("tools-gcp-run@peq-tools.iam.gserviceaccount.com")
+    pdf.bullet("secretAccessor on peq-tools-app-config only; no key file")
 
     pdf.subsection("Cloud Build SAs (cloudbuild.tf)")
     pdf.bullet("894268831911@cloudbuild.gserviceaccount.com")
@@ -345,11 +345,11 @@ curl http://localhost:8080/ready"""
 
     pdf.subsection("Key resource names")
     pdf.table_row("Resource", "Name")
-    pdf.table_row("Project ID", "tools-non-prod")
-    pdf.table_row("Dev bucket", "tools-non-prod-dev-sandbox")
-    pdf.table_row("State bucket", "tools-non-prod-terraform-state")
-    pdf.table_row("Secret", "tools-non-prod-app-config")
-    pdf.table_row("Registry", "us-central1-docker.pkg.dev/tools-non-prod/tools-gcp")
+    pdf.table_row("Project ID", "peq-tools")
+    pdf.table_row("Dev bucket", "peq-tools-dev-sandbox")
+    pdf.table_row("State bucket", "peq-tools-terraform-state")
+    pdf.table_row("Secret", "peq-tools-app-config")
+    pdf.table_row("Registry", "us-central1-docker.pkg.dev/peq-tools/tools-gcp")
 
     # 9. Troubleshooting
     pdf.add_page()
@@ -361,7 +361,7 @@ curl http://localhost:8080/ready"""
     )
     pdf.table_row(
         "ADC quota project warning (old project ID)",
-        "gcloud auth application-default login; set-quota-project tools-non-prod",
+        "gcloud auth application-default login; set-quota-project peq-tools",
     )
     pdf.table_row(
         "/ready secret_configured false",
@@ -403,7 +403,7 @@ curl http://localhost:8080/ready"""
     pdf.multi_cell(
         0,
         5,
-        "Generated from the completed tools-non-prod bootstrap (June 2026). "
+        "Generated from the completed peq-tools bootstrap (June 2026). "
         "Canonical runbooks: docs/GCP_SETUP.md, docs/WAITING_FOR_GCP.md, docs/CLONE_TO_RUNNING.md. "
         "Regenerate: python scripts/generate-setup-report.py",
     )

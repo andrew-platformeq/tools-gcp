@@ -3,13 +3,13 @@
 # Run once when the project does not yet exist (week-1 critical path).
 set -euo pipefail
 
-PROJECT_ID="${PROJECT_ID:-tools-non-prod}"
+PROJECT_ID="${PROJECT_ID:-peq-tools}"
 REGION="${REGION:-us-central1}"
 BILLING_ACCOUNT="${BILLING_ACCOUNT:?Set BILLING_ACCOUNT env var}"
 MEMBER="${MEMBER:?Set MEMBER env var (e.g. user:andrew@example.com)}"
 
 echo "Creating project: $PROJECT_ID"
-gcloud projects create "$PROJECT_ID" --name="Tools Non-Prod" 2>/dev/null || echo "Project may already exist"
+gcloud projects create "$PROJECT_ID" --name="Peq Tools" 2>/dev/null || echo "Project may already exist"
 
 echo "Linking billing account"
 gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT"

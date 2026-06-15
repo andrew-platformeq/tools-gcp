@@ -14,7 +14,7 @@ cd tools-gcp
 
 gcloud auth login
 gcloud auth application-default login
-gcloud config set project tools-non-prod
+gcloud config set project peq-tools
 
 make install
 cp .env.example .env
