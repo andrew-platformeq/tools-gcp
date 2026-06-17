@@ -19,6 +19,8 @@ help:
 	@echo "  deploy    Build and deploy to Cloud Run"
 	@echo "  deploy-ci Docker build/push + deploy (for CI with WIF)"
 	@echo "  smoke     Hit /health on deployed Cloud Run service"
+	@echo "  daily-sweep-report  Run daily Linear sweep report (dry-run with TOOLS_SKIP_GCP=1)"
+	@echo "  docs-daily-sweep    Generate daily-sweep-report PDF guide"
 
 $(VENV)/bin/activate:
 	$(PYTHON) -m venv $(VENV)
@@ -45,6 +47,14 @@ ci: install
 
 verify:
 	@./scripts/verify-setup.sh
+
+daily-sweep-report: install
+	@if [ -f .env ]; then set -a && . ./.env && set +a; fi; \
+	TOOLS_SKIP_GCP=$${TOOLS_SKIP_GCP:-1} $(BIN)/tools-daily-sweep-report --dry-run
+
+docs-daily-sweep: install
+	$(BIN)/pip install fpdf2 -q
+	$(BIN)/python scripts/generate-daily-sweep-report-doc.py
 
 deploy: install
 	@test -n "$(PROJECT_ID)" || (echo "Set PROJECT_ID or gcloud config project" && exit 1)

@@ -45,3 +45,8 @@ output "github_deployer_sa" {
   value       = google_service_account.github_deployer.email
   description = "Deployer service account email — set as service_account in the deploy workflow."
 }
+
+output "daily_sweep_report_secret" {
+  value       = google_secret_manager_secret.daily_sweep_report_config.secret_id
+  description = "Secret Manager container for daily-sweep-report job credentials (JSON)."
+}

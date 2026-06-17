@@ -28,7 +28,9 @@ Waiting for the GCP project? See **[docs/WAITING_FOR_GCP.md](docs/WAITING_FOR_GC
 ## Repository Layout
 
 ```
-├── src/tools/              Application code (FastAPI + Secret Manager)
+├── src/tools/              Shared platform code (config, secrets, FastAPI app)
+├── src/jobs/               Scheduled jobs and utilities (one folder per job)
+│   └── daily-sweep-report/ Daily Linear sweep summary email
 ├── tests/                  Unit tests (no GCP credentials required)
 ├── infra/terraform/        Non-prod GCP project IAM and resources
 ├── scripts/                Bootstrap and verification scripts
@@ -56,6 +58,7 @@ Waiting for the GCP project? See **[docs/WAITING_FOR_GCP.md](docs/WAITING_FOR_GC
 | Git / PR / commits | [docs/GIT_STANDARDS.md](docs/GIT_STANDARDS.md) |
 | Secrets (no keys on disk) | [docs/SECRETS.md](docs/SECRETS.md) |
 | GCP non-prod bootstrap | [docs/GCP_SETUP.md](docs/GCP_SETUP.md) |
+| Daily sweep report job | [docs/daily-sweep-report-guide.pdf](docs/daily-sweep-report-guide.pdf) |
 | Setup walkthrough (PDF) | [docs/tools-gcp-setup-walkthrough.pdf](docs/tools-gcp-setup-walkthrough.pdf) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
