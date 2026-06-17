@@ -27,10 +27,8 @@ jobs:
         name: Authenticate to GCP (keyless, WIF)
         uses: google-github-actions/auth@v2
         with:
-          # After bootstrap: terraform -chdir=infra/terraform output wif_provider
-          # and github_deployer_sa — paste those values here.
-          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          service_account: ${{ vars.GITHUB_DEPLOYER_SA }}
+          workload_identity_provider: projects/184555541545/locations/global/workloadIdentityPools/github-pool/providers/github-oidc
+          service_account: github-deployer@peq-tools.iam.gserviceaccount.com
           # Required so gcloud uses peq-tools as the quota/billing project for
           # serviceusage.services.use (without this, builds submit 403s on _cloudbuild).
           project_id: peq-tools
