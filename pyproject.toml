@@ -5,6 +5,7 @@ description = "PlatformEq tools — non-prod GCP services and infrastructure"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "certifi>=2024.0.0",
     "google-cloud-secret-manager>=2.16.0",
     "google-auth>=2.20.0",
     "fastapi>=0.115.0",

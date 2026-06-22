@@ -19,6 +19,9 @@ it runs in. Python 3.11, `src/` layout, deployed to **Cloud Run**.
 | `make ci` | Full local CI: ruff + pip-audit + pytest (mirrors GitHub Actions) |
 | `make verify` | `scripts/verify-setup.sh` — clone-to-running prerequisite checks |
 | `make deploy` | Build via Cloud Build, deploy to Cloud Run (mutating — confirm first) |
+| `make deploy-job JOB=...` | Deploy a Cloud Run Job from the shared image |
+| `make deploy-all` | Build, deploy service, deploy all jobs |
+| `make run-job JOB=...` | Execute a Cloud Run Job on GCP |
 | `make smoke` | Hit `/health` and `/ready` on the live Cloud Run URL |
 
 - Tests require `TOOLS_SKIP_GCP=1` so they run without GCP credentials.

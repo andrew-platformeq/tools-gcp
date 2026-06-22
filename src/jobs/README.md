@@ -2,6 +2,9 @@
 
 Each scheduled or CLI-run utility lives in its own folder under `src/jobs/`.
 
+For platform layout, data domains, and scaling rules see **[docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)**.
+BigQuery SQL for pipelines lives in **[infra/bigquery/](../../infra/bigquery/)**.
+
 ## Layout
 
 ```
@@ -22,6 +25,8 @@ Folder names use **kebab-case** (`daily-sweep-report`). Python imports use **sna
 | Job secrets (values) | Secret Manager — one secret container per job |
 | Job CLI entry point | `[project.scripts]` in `pyproject.toml` as `tools-<job-name>` |
 | Job tests | `tests/jobs/<job_name>/` |
+| Cloud Run Job deploy | `make deploy-job JOB=<job-name>` |
+| Cloud Run Job execute | `make run-job JOB=<job-name>` |
 
 ## Adding a new job
 

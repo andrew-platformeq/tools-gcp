@@ -31,11 +31,13 @@ Waiting for the GCP project? See **[docs/WAITING_FOR_GCP.md](docs/WAITING_FOR_GC
 ├── src/tools/              Shared platform code (config, secrets, FastAPI app)
 ├── src/jobs/               Scheduled jobs and utilities (one folder per job)
 │   └── daily-sweep-report/ Daily Linear sweep summary email
+├── infra/
+│   ├── terraform/        Non-prod GCP project IAM and resources
+│   └── bigquery/           Medallion SQL per data source (see README there)
 ├── tests/                  Unit tests (no GCP credentials required)
-├── infra/terraform/        Non-prod GCP project IAM and resources
 ├── scripts/                Bootstrap and verification scripts
-├── docs/                   Standards and setup guides
-└── .github/workflows/      CI (lint + test)
+├── docs/                   Standards, architecture, and setup guides
+└── .github/workflows/      CI (lint + test) and deploy
 ```
 
 ## Make Targets
@@ -48,13 +50,17 @@ Waiting for the GCP project? See **[docs/WAITING_FOR_GCP.md](docs/WAITING_FOR_GC
 | `make lint` | Run ruff |
 | `make ci` | Full CI suite locally (lint + pip-audit + test) |
 | `make verify` | Clone-to-running prerequisite checks |
-| `make deploy` | Build and deploy to Cloud Run |
+| `make deploy` | Build image and deploy Cloud Run service |
+| `make deploy-job JOB=...` | Deploy a Cloud Run Job from the shared image |
+| `make run-job JOB=...` | Execute a Cloud Run Job on GCP |
+| `make deploy-all` | Build image, deploy service and all jobs |
 | `make smoke` | Hit deployed `/health` and `/ready` |
 
 ## Standards
 
 | Topic | Document |
 |-------|----------|
+| Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Git / PR / commits | [docs/GIT_STANDARDS.md](docs/GIT_STANDARDS.md) |
 | Secrets (no keys on disk) | [docs/SECRETS.md](docs/SECRETS.md) |
 | GCP non-prod bootstrap | [docs/GCP_SETUP.md](docs/GCP_SETUP.md) |

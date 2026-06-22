@@ -21,3 +21,7 @@ alert_email = "andrew@platformeq.com"
 # account. Leave blank to skip the budget.
 billing_account = "" # e.g. "01ABCD-2345EF-6789GH"
 budget_amount   = 50 # monthly USD; alerts at 50/90/100% + forecast
+
+# --- Cloud Run Jobs ---
+# Enable only after daily-sweep-report secret is populated and a manual run succeeds.
+enable_daily_sweep_scheduler = false

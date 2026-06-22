@@ -31,7 +31,7 @@ jobs:
       - name: Dependency audit
         run: |
           pip install pip-audit
-          pip-audit
+          pip-audit -r requirements.txt
 
       - name: Unit tests
         run: pytest -q

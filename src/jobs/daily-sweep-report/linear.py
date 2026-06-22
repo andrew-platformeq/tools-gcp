@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import json
+import ssl
 import urllib.error
 import urllib.request
 from typing import Any
 
+import certifi
 from daily_sweep_report.config import SWEEP_TITLES, WatchedIssue
+
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 
@@ -52,7 +56,7 @@ def fetch_issues(
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=30, context=_SSL_CONTEXT) as response:
             body = json.loads(response.read())
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
