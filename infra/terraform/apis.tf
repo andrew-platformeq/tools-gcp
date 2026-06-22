@@ -21,6 +21,9 @@ locals {
     # Keyless CI — Workload Identity Federation (Phase 2, Pillar 3)
     "iamcredentials.googleapis.com", # mint short-lived tokens for the deployer SA
     "sts.googleapis.com",            # OIDC token exchange (GitHub -> GCP)
+
+    # Scheduled Cloud Run Jobs
+    "cloudscheduler.googleapis.com",
   ]
 
   # Intentionally omitted:

@@ -18,7 +18,7 @@ def get_secret(secret_name: str | None = None, *, settings: Settings | None = No
     name = secret_name or cfg.secret_name
     resource = f"projects/{cfg.gcp_project}/secrets/{name}/versions/latest"
 
-    client = secretmanager.SecretManagerServiceClient()
+    client = secretmanager.SecretManagerServiceClient(transport="rest")
     response = client.access_secret_version(request={"name": resource})
     return response.payload.data.decode("utf-8")
 

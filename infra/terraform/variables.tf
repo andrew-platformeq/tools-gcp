@@ -50,6 +50,12 @@ variable "budget_amount" {
   default     = 50
 }
 
+variable "enable_daily_sweep_scheduler" {
+  description = "When true, Cloud Scheduler runs daily-sweep-report Mon–Fri at 9:00 AM Eastern. Enable only after the job secret is populated and a manual run succeeds."
+  type        = bool
+  default     = false
+}
+
 variable "github_repo" {
   description = "GitHub repository allowed to deploy keylessly via Workload Identity Federation, in owner/repo form."
   type        = string

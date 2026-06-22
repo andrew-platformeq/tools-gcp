@@ -50,3 +50,13 @@ output "daily_sweep_report_secret" {
   value       = google_secret_manager_secret.daily_sweep_report_config.secret_id
   description = "Secret Manager container for daily-sweep-report job credentials (JSON)."
 }
+
+output "daily_sweep_report_job" {
+  value       = google_cloud_run_v2_job.daily_sweep_report.name
+  description = "Cloud Run Job name for daily-sweep-report."
+}
+
+output "container_image" {
+  value       = local.container_image
+  description = "Shared container image used by the Cloud Run service and jobs."
+}
