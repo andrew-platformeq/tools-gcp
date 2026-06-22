@@ -16,6 +16,10 @@ ifeq ($(JOB),daily-sweep-report)
 JOB_CMD := tools-daily-sweep-report
 JOB_ENV_VARS := TOOLS_GCP_PROJECT=$(PROJECT_ID),TOOLS_GCP_REGION=$(REGION),TOOLS_DAILY_SWEEP_REPORT_SECRET_NAME=$(PROJECT_ID)-daily-sweep-report-config
 endif
+ifeq ($(JOB),linear-ingest)
+JOB_CMD := tools-linear-ingest
+JOB_ENV_VARS := TOOLS_GCP_PROJECT=$(PROJECT_ID),TOOLS_GCP_REGION=$(REGION),TOOLS_LINEAR_INGEST_SECRET_NAME=$(PROJECT_ID)-linear-ingest-config,TOOLS_LINEAR_DATA_BUCKET=$(PROJECT_ID)-linear-data
+endif
 
 help:
 	@echo "Targets:"
@@ -31,9 +35,10 @@ help:
 	@echo "  deploy-jobs    Deploy all Cloud Run Jobs"
 	@echo "  deploy-all     Build image, deploy service, deploy all jobs"
 	@echo "  deploy-ci      Docker build/push + deploy service (for CI with WIF)"
-	@echo "  run-job        Execute a Cloud Run Job (JOB=..., optional ARGS=...)"
+	@echo "  run-job        Execute a Cloud Run Job (JOB=..., optional ARGS='backfill --entities organization')"
 	@echo "  smoke          Hit /health on deployed Cloud Run service"
 	@echo "  daily-sweep-report  Run daily Linear sweep report locally (dry-run default)"
+	@echo "  linear-ingest       Run linear bronze ingest locally (incremental dry-run default)"
 	@echo "  docs-daily-sweep    Generate daily-sweep-report PDF guide"
 
 $(VENV)/bin/activate:
@@ -65,6 +70,10 @@ verify:
 daily-sweep-report: install
 	@if [ -f .env ]; then set -a && . ./.env && set +a; fi; \
 	TOOLS_SKIP_GCP=$${TOOLS_SKIP_GCP:-1} $(BIN)/tools-daily-sweep-report --dry-run
+
+linear-ingest: install
+	@if [ -f .env ]; then set -a && . ./.env && set +a; fi; \
+	TOOLS_SKIP_GCP=$${TOOLS_SKIP_GCP:-1} $(BIN)/tools-linear-ingest incremental --dry-run --entities organization
 
 docs-daily-sweep: install
 	$(BIN)/pip install fpdf2 -q
@@ -103,6 +112,7 @@ deploy-service deploy-run:
 
 deploy-jobs:
 	$(MAKE) deploy-job JOB=daily-sweep-report
+	$(MAKE) deploy-job JOB=linear-ingest
 
 deploy-job:
 	@test -n "$(JOB)" || (echo "Set JOB=... (e.g. daily-sweep-report)" && exit 1)
@@ -119,11 +129,19 @@ deploy-job:
 run-job:
 	@test -n "$(JOB)" || (echo "Set JOB=... (e.g. daily-sweep-report)" && exit 1)
 	@test -n "$(PROJECT_ID)" || (echo "Set PROJECT_ID or gcloud config project" && exit 1)
-	gcloud run jobs execute "$(JOB)" \
-		--region "$(REGION)" \
-		--project "$(PROJECT_ID)" \
-		$(if $(ARGS),--args="$(ARGS)",) \
-		--wait
+	@if [ -n "$(ARGS)" ]; then \
+		CSV_ARGS=$$(echo "$(ARGS)" | tr ' ' ','); \
+		gcloud run jobs execute "$(JOB)" \
+			--region "$(REGION)" \
+			--project "$(PROJECT_ID)" \
+			--args="$$CSV_ARGS" \
+			--wait; \
+	else \
+		gcloud run jobs execute "$(JOB)" \
+			--region "$(REGION)" \
+			--project "$(PROJECT_ID)" \
+			--wait; \
+	fi
 
 smoke:
 	@URL=$$(gcloud run services describe "$(SERVICE)" --region "$(REGION)" --project "$(PROJECT_ID)" --format='value(status.url)' 2>/dev/null); \

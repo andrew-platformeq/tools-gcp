@@ -60,3 +60,33 @@ output "container_image" {
   value       = local.container_image
   description = "Shared container image used by the Cloud Run service and jobs."
 }
+
+output "linear_data_bucket" {
+  value       = google_storage_bucket.linear_data.name
+  description = "GCS bucket for Linear bronze JSON and watermark state."
+}
+
+output "linear_bronze_dataset" {
+  value       = google_bigquery_dataset.linear_bronze.dataset_id
+  description = "BigQuery bronze dataset for Linear raw tables."
+}
+
+output "linear_silver_dataset" {
+  value       = google_bigquery_dataset.linear_silver.dataset_id
+  description = "BigQuery silver dataset for Linear merged tables."
+}
+
+output "linear_gold_dataset" {
+  value       = google_bigquery_dataset.linear_gold.dataset_id
+  description = "BigQuery gold dataset for Linear consumer views."
+}
+
+output "linear_ingest_secret" {
+  value       = google_secret_manager_secret.linear_ingest_config.secret_id
+  description = "Secret Manager container for linear-ingest credentials (JSON)."
+}
+
+output "linear_ingest_job" {
+  value       = google_cloud_run_v2_job.linear_ingest.name
+  description = "Cloud Run Job name for linear-ingest."
+}
