@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "certifi>=2024.0.0",
+    "google-cloud-bigquery>=3.11.0",
     "google-cloud-secret-manager>=2.16.0",
+    "google-cloud-storage>=2.14.0",
     "google-auth>=2.20.0",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
@@ -15,6 +17,8 @@ dependencies = [
 [project.scripts]
 tools-serve = "tools.app:main"
 tools-daily-sweep-report = "daily_sweep_report.main:main"
+tools-linear-ingest = "linear_ingest.main:main"
+tools-eml-viewer-telemetry = "eml_viewer_telemetry.app:main"
 
 [project.optional-dependencies]
 dev = [
@@ -43,8 +47,10 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["tools", "daily_sweep_report"]
+packages = ["tools", "daily_sweep_report", "linear_ingest", "eml_viewer_telemetry"]
 
 [tool.setuptools.package-dir]
 tools = "src/tools"
 daily_sweep_report = "src/jobs/daily-sweep-report"
+linear_ingest = "src/jobs/linear-ingest"
+eml_viewer_telemetry = "src/jobs/eml-viewer-telemetry"
