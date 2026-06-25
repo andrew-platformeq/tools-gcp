@@ -90,3 +90,23 @@ output "linear_ingest_job" {
   value       = google_cloud_run_v2_job.linear_ingest.name
   description = "Cloud Run Job name for linear-ingest."
 }
+
+output "eml_viewer_bronze_dataset" {
+  value       = google_bigquery_dataset.eml_viewer_bronze.dataset_id
+  description = "BigQuery bronze dataset for EML Viewer telemetry events."
+}
+
+output "eml_viewer_gold_dataset" {
+  value       = google_bigquery_dataset.eml_viewer_gold.dataset_id
+  description = "BigQuery gold dataset for EML Viewer analytics views."
+}
+
+output "eml_viewer_telemetry_secret" {
+  value       = google_secret_manager_secret.eml_viewer_telemetry_config.secret_id
+  description = "Secret Manager container for eml-viewer-telemetry API key (JSON)."
+}
+
+output "eml_viewer_telemetry_service" {
+  value       = "eml-viewer-telemetry"
+  description = "Cloud Run service name — deploy with make deploy-telemetry-service."
+}

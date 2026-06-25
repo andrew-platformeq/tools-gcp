@@ -18,6 +18,7 @@ dependencies = [
 tools-serve = "tools.app:main"
 tools-daily-sweep-report = "daily_sweep_report.main:main"
 tools-linear-ingest = "linear_ingest.main:main"
+tools-eml-viewer-telemetry = "eml_viewer_telemetry.app:main"
 
 [project.optional-dependencies]
 dev = [
@@ -46,9 +47,10 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["tools", "daily_sweep_report", "linear_ingest"]
+packages = ["tools", "daily_sweep_report", "linear_ingest", "eml_viewer_telemetry"]
 
 [tool.setuptools.package-dir]
 tools = "src/tools"
 daily_sweep_report = "src/jobs/daily-sweep-report"
 linear_ingest = "src/jobs/linear-ingest"
+eml_viewer_telemetry = "src/jobs/eml-viewer-telemetry"
