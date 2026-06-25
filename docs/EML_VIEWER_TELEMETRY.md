@@ -104,7 +104,6 @@ bq query --use_legacy_sql=false \
 |------|---------|
 | `gold_daily_active_users` | Distinct users/installs per day |
 | `gold_import_success_rate` | Success vs fail vs rejected |
-| `gold_drop_vs_picker` | Import method breakdown |
 | `gold_repeat_file_opens` | Same fingerprint opened 2+ times |
 | `gold_unique_files_vs_imports` | Distinct files vs total imports |
 
