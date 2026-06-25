@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -62,7 +63,8 @@ def events_to_rows(events: list[dict], *, ingested_at: datetime | None = None) -
                 "extension_version": event["extension_version"],
                 "chrome_version": event["chrome_version"],
                 "platform": event["platform"],
-                "properties": event.get("properties") or {},
+                # BigQuery JSON columns require a JSON-encoded string for streaming insert.
+                "properties": json.dumps(event.get("properties") or {}),
             }
         )
     return rows

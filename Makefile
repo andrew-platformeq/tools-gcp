@@ -140,7 +140,7 @@ deploy-telemetry-service:
 	@gcloud run services describe "$(TELEMETRY_SERVICE)" --region "$(REGION)" --project "$(PROJECT_ID)" --format='value(status.url)'
 
 # Chrome extensions cannot send GCP identity tokens — this service must allow allUsers.
-# Fails if an org policy blocks public Cloud Run invoker (common in enterprise GCP).
+# Warn-only: CI deployer SA often lacks setIamPolicy; org policy may also block allUsers.
 bind-telemetry-public:
 	@test -n "$(PROJECT_ID)" || (echo "Set PROJECT_ID or gcloud config project" && exit 1)
 	@gcloud run services add-iam-policy-binding "$(TELEMETRY_SERVICE)" \
@@ -149,12 +149,11 @@ bind-telemetry-public:
 		--member=allUsers \
 		--role=roles/run.invoker \
 		|| (echo ""; \
-		    echo "ERROR: Could not grant public invoker on $(TELEMETRY_SERVICE)."; \
-		    echo "Org policy likely blocks allUsers. The Chrome extension cannot flush"; \
-		    echo "telemetry until an admin allows roles/run.invoker for allUsers on this"; \
-		    echo "service (or relax iam.allowedPolicyMemberDomains for peq-tools)."; \
+		    echo "WARNING: Could not grant public invoker on $(TELEMETRY_SERVICE)."; \
+		    echo "Deploy succeeded; extension flush needs roles/run.invoker for allUsers."; \
+		    echo "Run as a project admin: make bind-telemetry-public"; \
 		    echo "See docs/EML_VIEWER_TELEMETRY.md#public-access-org-policy."; \
-		    exit 1)
+		    exit 0)
 
 deploy-jobs:
 	$(MAKE) deploy-job JOB=daily-sweep-report
