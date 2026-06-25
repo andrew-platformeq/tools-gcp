@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -49,7 +50,8 @@ def test_ingest_writes_rows_to_memory() -> None:
     count = ingest_events([SAMPLE_EVENT], writer=writer)
     assert count == 1
     assert writer.rows[0]["event"] == "import_succeeded"
-    assert writer.rows[0]["properties"]["method"] == "picker"
+    props = json.loads(writer.rows[0]["properties"])
+    assert props["method"] == "picker"
 
 
 def test_health(client: TestClient) -> None:
