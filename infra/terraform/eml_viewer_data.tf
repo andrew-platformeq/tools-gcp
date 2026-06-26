@@ -122,6 +122,27 @@ resource "google_bigquery_dataset_iam_member" "dev_eml_viewer_gold" {
   member     = each.value
 }
 
+# Analysts (e.g. Leo) keep read access to EML-viewer data. (They are not in the
+# `developers` set, so the dev_* bindings above don't cover them.) Note: the telemetry
+# *ingest secret* is intentionally NOT granted to analysts — same rationale as the
+# Linear ingest key. NB: eml_viewer_bronze.events carries user_email (telemetry PII);
+# consider gold-only or masking for analysts when this includes external users.
+resource "google_bigquery_dataset_iam_member" "analyst_eml_viewer_bronze" {
+  for_each = local.analysts
+
+  dataset_id = google_bigquery_dataset.eml_viewer_bronze.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "analyst_eml_viewer_gold" {
+  for_each = local.analysts
+
+  dataset_id = google_bigquery_dataset.eml_viewer_gold.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
 # Cloud Run service is deployed via `make deploy-telemetry-service` (same pattern as
 # tools-gcp). Terraform owns data plane + secret only. Deletion protection is not
 # set here — gcloud run deploy has no --deletion-protection flag; use IAM + process.

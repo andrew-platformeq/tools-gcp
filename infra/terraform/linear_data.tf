@@ -59,6 +59,26 @@ resource "google_bigquery_dataset" "linear_gold" {
   depends_on = [google_project_service.apis]
 }
 
+resource "google_bigquery_dataset" "linear_sandbox" {
+  dataset_id                  = "linear_sandbox"
+  location                    = var.region
+  default_table_expiration_ms = 7776000000 # 90 days — scratch tables auto-expire
+
+  labels = {
+    environment = var.environment
+    managed_by  = "terraform"
+    domain      = "linear"
+    layer       = "sandbox"
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+# FOLLOW-UP (tracked, not implemented here): the ingest secret currently holds a
+# *personal* Linear API key. Plan to migrate to a Linear OAuth app
+# (actor=application, read-only scopes) — or an interim dedicated read-only Guest bot
+# account — so the pipeline identity is decoupled from any human and the audit trail
+# is clean. Do this before external/customer data raises the governance bar.
 resource "google_secret_manager_secret" "linear_ingest_config" {
   secret_id = "${var.project_id}-linear-ingest-config"
 
@@ -126,6 +146,59 @@ resource "google_storage_bucket_iam_member" "dev_linear_data_object_admin" {
   bucket = google_storage_bucket.linear_data.name
   role   = "roles/storage.objectAdmin"
   member = each.value
+}
+
+# --- Human data access ---
+# Developers (Andrew) read all medallion layers; analysts (Leo) read silver+gold only.
+# Writes to bronze/silver/gold stay with the Cloud Run SA — humans never write there.
+resource "google_bigquery_dataset_iam_member" "dev_linear_bronze_viewer" {
+  for_each   = local.developers
+  dataset_id = google_bigquery_dataset.linear_bronze.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "dev_linear_silver_viewer" {
+  for_each   = local.developers
+  dataset_id = google_bigquery_dataset.linear_silver.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "dev_linear_gold_viewer" {
+  for_each   = local.developers
+  dataset_id = google_bigquery_dataset.linear_gold.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "analyst_linear_silver_viewer" {
+  for_each   = local.analysts
+  dataset_id = google_bigquery_dataset.linear_silver.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "analyst_linear_gold_viewer" {
+  for_each   = local.analysts
+  dataset_id = google_bigquery_dataset.linear_gold.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+# Shared sandbox: both developers and analysts get read/write (analysis/testing scratch).
+resource "google_bigquery_dataset_iam_member" "dev_linear_sandbox_editor" {
+  for_each   = local.developers
+  dataset_id = google_bigquery_dataset.linear_sandbox.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "analyst_linear_sandbox_editor" {
+  for_each   = local.analysts
+  dataset_id = google_bigquery_dataset.linear_sandbox.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = each.value
 }
 
 resource "google_cloud_run_v2_job" "linear_ingest" {
