@@ -14,6 +14,12 @@ variable "developers" {
   type        = list(string)
 }
 
+variable "analysts" {
+  description = "IAM members with read-only silver/gold + shared sandbox access (e.g. user:leo@platformeq.com)"
+  type        = list(string)
+  default     = []
+}
+
 variable "environment" {
   description = "Environment label"
   type        = string

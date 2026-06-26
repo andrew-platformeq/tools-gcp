@@ -3,9 +3,12 @@
 
 locals {
   developers = toset(var.developers)
+  analysts   = toset(var.analysts)
 }
 
-# BigQuery / Cloud Run: no datasets or services in Terraform yet — project scope is fine for now.
+# Project-scoped developer roles. Dataset-level data access for the medallion layers
+# is granted per-dataset in linear_data.tf (dev_linear_* / analyst_linear_* bindings),
+# because project-level bigquery.user does NOT include bigquery.tables.getData.
 resource "google_project_iam_member" "bigquery_user" {
   for_each = local.developers
 
@@ -34,6 +37,25 @@ resource "google_project_iam_member" "cloudbuild_editor" {
 # (gcloud auth application-default set-quota-project peq-tools).
 resource "google_project_iam_member" "developer_service_usage" {
   for_each = local.developers
+
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = each.value
+}
+
+# Analyst project-scoped roles (e.g. Leo). Dataset reads are granted per-dataset in
+# linear_data.tf; these are the project-level roles an analyst needs to run queries
+# and use local tooling. No deploy/build, secret, or bucket access.
+resource "google_project_iam_member" "analyst_bigquery_user" {
+  for_each = local.analysts
+
+  project = var.project_id
+  role    = "roles/bigquery.user" # jobs.create + Storage Read API (readSessions) for notebooks/bigframes/Spark
+  member  = each.value
+}
+
+resource "google_project_iam_member" "analyst_service_usage" {
+  for_each = local.analysts
 
   project = var.project_id
   role    = "roles/serviceusage.serviceUsageConsumer"
