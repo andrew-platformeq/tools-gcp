@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -50,12 +51,16 @@ def max_updated_at(nodes: list[dict[str, Any]]) -> str | None:
 def build_connection_query(entity: EntityConfig, with_filter: bool) -> str:
     filter_decl = ", $since: DateTimeOrDuration!" if with_filter else ""
     filter_use = ", filter: { updatedAt: { gt: $since } }" if with_filter else ""
+    # includeArchived: archived records are excluded from the default connection AND
+    # archiving does not bump updatedAt (confirmed via API probe), so without this a
+    # backfill silently skips every archived issue/project. Required for completeness.
     return f"""
     query($after: String{filter_decl}) {{
       {entity.connection}(
         first: {PAGE_SIZE}
         after: $after
         orderBy: updatedAt
+        includeArchived: true
         {filter_use}
       ) {{
         nodes {{
@@ -182,6 +187,49 @@ def pull_snapshot(
         )
     raw = obj.get("updatedAt")
     return 1, raw
+
+
+def build_run_history_record(summary: dict[str, Any]) -> dict[str, Any]:
+    """Flatten a run summary into one BigQuery-friendly audit record.
+
+    The summary keys entities by name (a map whose shape BigQuery can't infer); the audit
+    record uses a uniform repeated struct plus run-level rollups instead. ``code_version``
+    is sourced from the image build (TOOLS_IMAGE_VERSION) so each run is traceable to the
+    code that produced it; it is null when unset (e.g. local runs).
+    """
+    entities: list[dict[str, Any]] = []
+    total_records = 0
+    entity_failures = 0
+    for name, result in summary.get("entities", {}).items():
+        status = result.get("status")
+        records = result.get("records")
+        if status == "success" and isinstance(records, int):
+            total_records += records
+        else:
+            entity_failures += 1
+        entities.append(
+            {
+                "entity": name,
+                "status": status,
+                "records": records,
+                "since": result.get("since"),
+                "new_watermark": result.get("new_watermark"),
+                "error": result.get("error"),
+            }
+        )
+    return {
+        "run_id": summary.get("run_id"),
+        "mode": summary.get("mode"),
+        "dry_run": summary.get("dry_run"),
+        "status": summary.get("status"),
+        "started_at": summary.get("started_at"),
+        "completed_at": summary.get("completed_at"),
+        "run_prefix": summary.get("run_prefix"),
+        "code_version": os.environ.get("TOOLS_IMAGE_VERSION"),
+        "total_records": total_records,
+        "entity_failures": entity_failures,
+        "entities": entities,
+    }
 
 
 def resolve_since(
@@ -319,6 +367,10 @@ def run_extract(
     if not dry_run:
         summary_path = bronze_store.write_summary(run_prefix, summary)
         logger.info("Summary: %s", summary_path)
+        history_path = bronze_store.write_run_history(
+            run_id, build_run_history_record(summary)
+        )
+        logger.info("Run history: %s", history_path)
 
     return summary
 

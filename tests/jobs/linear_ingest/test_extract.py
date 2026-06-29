@@ -11,8 +11,13 @@ import pytest
 from linear_ingest.client import LinearClient
 from linear_ingest.config import IngestSecrets, JobSettings
 from linear_ingest.entities import EPOCH, EntityConfig
-from linear_ingest.extract import resolve_since, run_extract
-from linear_ingest.gcs import LocalBronzeStore
+from linear_ingest.extract import (
+    build_connection_query,
+    build_run_history_record,
+    resolve_since,
+    run_extract,
+)
+from linear_ingest.gcs import RUN_HISTORY_PREFIX, LocalBronzeStore
 from linear_ingest.main import run
 
 
@@ -186,3 +191,71 @@ def test_linear_client_parses_success(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     data = LinearClient("key").execute("query { teams { nodes { id } } }")
     assert "teams" in data
+
+
+def test_build_connection_query_includes_archived() -> None:
+    entity = EntityConfig(name="issues", connection="issues", node_fields="id updatedAt")
+    # Required so backfills don't silently skip archived records (archiving doesn't bump
+    # updatedAt and archived rows are excluded from the default connection).
+    assert "includeArchived: true" in build_connection_query(entity, with_filter=False)
+    assert "includeArchived: true" in build_connection_query(entity, with_filter=True)
+
+
+def test_build_run_history_record_flattens_and_rolls_up() -> None:
+    summary = {
+        "run_id": "run_X",
+        "mode": "incremental",
+        "dry_run": False,
+        "status": "partial_failure",
+        "started_at": "2026-06-25T00:00:00.000Z",
+        "completed_at": "2026-06-25T00:01:00.000Z",
+        "run_prefix": "daily/run_X",
+        "entities": {
+            "issues": {"status": "success", "records": 7, "since": None, "new_watermark": "w"},
+            "comments": {"status": "failed", "error": "boom"},
+        },
+    }
+    record = build_run_history_record(summary)
+
+    assert record["run_id"] == "run_X"
+    assert record["total_records"] == 7
+    assert record["entity_failures"] == 1
+    # entities is a uniform list of structs, not a map keyed by name.
+    assert isinstance(record["entities"], list)
+    by_name = {e["entity"]: e for e in record["entities"]}
+    assert by_name["issues"]["records"] == 7
+    assert by_name["comments"]["error"] == "boom"
+    assert "code_version" in record
+
+
+def test_run_extract_writes_run_history(tmp_path: Path) -> None:
+    store = LocalBronzeStore(root=tmp_path)
+    client = FakeLinearClient({"organization": ORG_RESPONSE, "teams": TEAMS_RESPONSE})
+    settings = JobSettings(
+        gcp_project="test",
+        gcs_bucket="test-bucket",
+        watermarks_blob="state/watermarks.json",
+        secret_name="test-secret",
+        skip_gcp=True,
+        dry_run=False,
+    )
+
+    summary = run_extract(
+        client,  # type: ignore[arg-type]
+        mode="backfill",
+        settings=settings,
+        dry_run=False,
+        override_since=None,
+        entities_filter=["organization", "teams"],
+        store=store,
+    )
+
+    history_files = list((tmp_path / RUN_HISTORY_PREFIX).glob("*.json"))
+    assert len(history_files) == 1
+    # Append-only: the file name is the run id, and the body is one NDJSON record.
+    assert history_files[0].name == f"{summary['run_id']}.json"
+    lines = history_files[0].read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    record = json.loads(lines[0])
+    assert record["run_id"] == summary["run_id"]
+    assert record["total_records"] == 2

@@ -11,6 +11,9 @@ from linear_ingest.config import JobSettings
 from linear_ingest.entities import WATERMARKS_VERSION
 
 BRONZE_PREFIX = "bronze"
+# Append-only audit trail of pipeline runs. One NDJSON record per run (run_id is unique,
+# so records are never overwritten); queryable via a BigQuery external table over the prefix.
+RUN_HISTORY_PREFIX = "audit/run_history"
 
 
 class BronzeStore(Protocol):
@@ -28,6 +31,8 @@ class BronzeStore(Protocol):
     ) -> str: ...
 
     def write_summary(self, run_prefix: str, summary: dict[str, Any]) -> str: ...
+
+    def write_run_history(self, run_id: str, record: dict[str, Any]) -> str: ...
 
 
 class LocalBronzeStore:
@@ -69,6 +74,13 @@ class LocalBronzeStore:
         path = self.root / run_prefix / "summary.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+        return str(path)
+
+    def write_run_history(self, run_id: str, record: dict[str, Any]) -> str:
+        path = self.root / RUN_HISTORY_PREFIX / f"{run_id}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # NDJSON: one compact record per line so the prefix reads as a single BQ table.
+        path.write_text(json.dumps(record) + "\n", encoding="utf-8")
         return str(path)
 
 
@@ -120,6 +132,16 @@ class GcsBronzeStore:
         blob = self._bucket.blob(blob_name)
         blob.upload_from_string(
             json.dumps(summary, indent=2) + "\n",
+            content_type="application/json",
+        )
+        return f"gs://{self._bucket.name}/{blob_name}"
+
+    def write_run_history(self, run_id: str, record: dict[str, Any]) -> str:
+        blob_name = f"{RUN_HISTORY_PREFIX}/{run_id}.json"
+        blob = self._bucket.blob(blob_name)
+        # NDJSON: one compact record per line so the prefix reads as a single BQ table.
+        blob.upload_from_string(
+            json.dumps(record) + "\n",
             content_type="application/json",
         )
         return f"gs://{self._bucket.name}/{blob_name}"

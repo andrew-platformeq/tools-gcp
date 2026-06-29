@@ -8,6 +8,24 @@ resource "google_storage_bucket" "linear_data" {
 
   uniform_bucket_level_access = true
 
+  # Versioning preserves overwrite history. Bronze pages are written once per run, but
+  # watermarks.json is overwritten every run — versioning keeps that state history so we
+  # can audit which window each run covered.
+  versioning {
+    enabled = true
+  }
+
+  # Cap noncurrent-version retention so versioned state/audit blobs don't grow without
+  # bound. 365 days keeps a year of watermark history; revisit if retention policy changes.
+  lifecycle_rule {
+    condition {
+      days_since_noncurrent_time = 365
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
   labels = {
     environment = var.environment
     managed_by  = "terraform"
