@@ -1,13 +1,13 @@
--- Bronze external table: one row per GCS page file for issues.
--- Source: gs://peq-tools-linear-data/bronze/{backfill|daily}/{run_id}/issues/page_*.json
+-- Bronze external table: one row per GCS page file for workflow_states.
+-- Source: gs://peq-tools-linear-data/bronze/{backfill|daily}/{run_id}/workflow_states/page_*.json
 -- Each file is one compact JSON line: { "meta": {...}, "nodes": [ ... ] }.
 -- BigQuery JSON external tables require one complete JSON object per line (not pretty-printed).
--- Query flattened rows via linear_bronze.issues (view).
+-- Query flattened rows via linear_bronze.workflow_states (view).
 --
 -- BigQuery allows only one wildcard per URI, in the last path segment — so URIs are
 -- discovered from GCS at apply time (one URI per run folder). Do not apply this file
--- directly; use: make apply-bq-linear-bronze ENTITY=issues
-CREATE OR REPLACE EXTERNAL TABLE `linear_bronze.issues_pages` (
+-- directly; use: make apply-bq-linear-bronze ENTITY=workflow_states
+CREATE OR REPLACE EXTERNAL TABLE `linear_bronze.workflow_states_pages` (
   meta STRUCT<
     run_id STRING,
     entity STRING,

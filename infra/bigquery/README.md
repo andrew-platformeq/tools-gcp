@@ -31,8 +31,9 @@ Datasets are created by Terraform. Table and view DDL is applied manually or via
 script until we automate it:
 
 ```bash
-# Linear bronze (GCS → BigQuery external table + view)
-make apply-bq-linear-bronze-issues
+# Linear bronze (GCS → BigQuery external tables + views)
+make apply-bq-linear-bronze-all            # all entities
+make apply-bq-linear-bronze ENTITY=issues  # one entity
 
 # Future silver/gold
 bq query --use_legacy_sql=false < infra/bigquery/linear/silver/ddl/issues.sql

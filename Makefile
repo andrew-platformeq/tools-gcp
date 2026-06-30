@@ -1,4 +1,4 @@
-.PHONY: install dev test lint ci verify deploy deploy-service deploy-telemetry-service deploy-job deploy-jobs deploy-all deploy-ci run-job smoke smoke-telemetry apply-bq-eml-viewer apply-bq-linear-bronze-issues clean help
+.PHONY: install dev test lint ci verify deploy deploy-service deploy-telemetry-service deploy-job deploy-jobs deploy-all deploy-ci run-job smoke smoke-telemetry apply-bq-eml-viewer apply-bq-linear-bronze apply-bq-linear-bronze-all clean help
 
 PYTHON ?= python3
 VENV := .venv
@@ -13,6 +13,7 @@ JOB ?=
 ARGS ?=
 
 LINEAR_DATA_BUCKET ?= peq-tools-linear-data
+LINEAR_BRONZE_ENTITIES := organization teams workflow_states issue_labels users projects cycles issues comments attachments
 
 # Per-job Cloud Run settings — extend when adding jobs.
 ifeq ($(JOB),daily-sweep-report)
@@ -43,7 +44,8 @@ help:
 	@echo "  smoke          Hit /health on deployed Cloud Run service"
 	@echo "  smoke-telemetry  Hit /health on eml-viewer-telemetry (no auth)"
 	@echo "  apply-bq-eml-viewer  Create eml_viewer gold views in BigQuery"
-	@echo "  apply-bq-linear-bronze-issues  Create linear_bronze issues external table + view"
+	@echo "  apply-bq-linear-bronze ENTITY=...  Create one linear_bronze entity external table + view"
+	@echo "  apply-bq-linear-bronze-all  Create linear_bronze external tables + views for all entities"
 	@echo "  daily-sweep-report  Run daily Linear sweep report locally (dry-run default)"
 	@echo "  linear-ingest       Run linear bronze ingest locally (incremental dry-run default)"
 	@echo "  docs-daily-sweep    Generate daily-sweep-report PDF guide"
@@ -220,19 +222,28 @@ apply-bq-eml-viewer:
 		bq query --use_legacy_sql=false --project_id="$(PROJECT_ID)" < "$$f"; \
 	done
 
-apply-bq-linear-bronze-issues:
+# Apply one entity's bronze external table (run-folder URIs discovered from GCS) + view.
+# Usage: make apply-bq-linear-bronze ENTITY=issues
+apply-bq-linear-bronze:
+	@test -n "$(ENTITY)" || (echo "Set ENTITY=... (e.g. issues)" && exit 1)
 	@test -n "$(PROJECT_ID)" || (echo "Set PROJECT_ID or gcloud config project" && exit 1)
-	@URIS=$$(gsutil ls -d "gs://$(LINEAR_DATA_BUCKET)/bronze/*/run_*/issues/" 2>/dev/null \
+	@URIS=$$(gsutil ls -d "gs://$(LINEAR_DATA_BUCKET)/bronze/*/run_*/$(ENTITY)/" 2>/dev/null \
 		| sed 's|$$|page_*.json|' \
 		| sed "s/^/'/; s/$$/'/" \
 		| paste -sd, -); \
-	test -n "$$URIS" || (echo "No issue bronze paths under gs://$(LINEAR_DATA_BUCKET)/bronze/" && exit 1); \
-	echo "Applying issues_pages ($$(echo "$$URIS" | tr ',' '\n' | wc -l | tr -d ' ') run URI(s))"; \
-	sed "s|__GCS_URIS__|$$URIS|" infra/bigquery/linear/bronze/issues_pages.sql \
+	test -n "$$URIS" || (echo "No bronze paths for $(ENTITY) under gs://$(LINEAR_DATA_BUCKET)/bronze/" && exit 1); \
+	echo "Applying $(ENTITY)_pages ($$(echo "$$URIS" | tr ',' '\n' | wc -l | tr -d ' ') run URI(s))"; \
+	sed "s|__GCS_URIS__|$$URIS|" infra/bigquery/linear/bronze/$(ENTITY)_pages.sql \
 		| bq query --use_legacy_sql=false --project_id="$(PROJECT_ID)"
-	@echo "Applying infra/bigquery/linear/bronze/issues.sql"
+	@echo "Applying infra/bigquery/linear/bronze/$(ENTITY).sql"
 	@bq query --use_legacy_sql=false --project_id="$(PROJECT_ID)" \
-		< infra/bigquery/linear/bronze/issues.sql
+		< infra/bigquery/linear/bronze/$(ENTITY).sql
+
+# Apply the bronze external table + view for every Linear entity.
+apply-bq-linear-bronze-all:
+	@for e in $(LINEAR_BRONZE_ENTITIES); do \
+		$(MAKE) --no-print-directory apply-bq-linear-bronze ENTITY=$$e || exit 1; \
+	done
 
 clean:
 	rm -rf $(VENV) .pytest_cache .ruff_cache
