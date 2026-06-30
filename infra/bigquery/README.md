@@ -8,6 +8,7 @@ load Bronze and execute these files via `bigquery.Client.query()`.
 ```
 infra/bigquery/
   <source>/                 e.g. linear, epic
+    bronze/                 External tables + views over GCS JSON (Linear)
     silver/
       ddl/                  CREATE TABLE statements (applied once)
       merge/                MERGE scripts (run after each ingest)
@@ -30,12 +31,13 @@ Datasets are created by Terraform. Table and view DDL is applied manually or via
 script until we automate it:
 
 ```bash
-# Example — after datasets exist
+# Linear bronze (GCS → BigQuery external table + view)
+make apply-bq-linear-bronze-issues
+
+# Future silver/gold
 bq query --use_legacy_sql=false < infra/bigquery/linear/silver/ddl/issues.sql
 bq query --use_legacy_sql=false < infra/bigquery/linear/gold/gold_sweep_issues.sql
 ```
-
-A `make apply-bq SOURCE=linear` target may be added when the first SQL files land.
 
 ## Cross-source views
 

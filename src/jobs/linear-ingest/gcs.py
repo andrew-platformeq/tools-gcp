@@ -16,6 +16,11 @@ BRONZE_PREFIX = "bronze"
 RUN_HISTORY_PREFIX = "audit/run_history"
 
 
+def _bronze_page_json(payload: dict[str, Any]) -> str:
+    """Compact single-line JSON — BigQuery external JSON reads one object per line."""
+    return json.dumps(payload, separators=(",", ":")) + "\n"
+
+
 class BronzeStore(Protocol):
     def load_watermarks(self) -> dict[str, Any]: ...
 
@@ -67,7 +72,7 @@ class LocalBronzeStore:
     ) -> str:
         path = self.root / run_prefix / entity / f"page_{page:04d}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        path.write_text(_bronze_page_json(payload), encoding="utf-8")
         return str(path)
 
     def write_summary(self, run_prefix: str, summary: dict[str, Any]) -> str:
@@ -122,7 +127,7 @@ class GcsBronzeStore:
         blob_name = f"{BRONZE_PREFIX}/{run_prefix}/{entity}/page_{page:04d}.json"
         blob = self._bucket.blob(blob_name)
         blob.upload_from_string(
-            json.dumps(payload, indent=2) + "\n",
+            _bronze_page_json(payload),
             content_type="application/json",
         )
         return f"gs://{self._bucket.name}/{blob_name}"

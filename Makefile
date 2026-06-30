@@ -1,4 +1,4 @@
-.PHONY: install dev test lint ci verify deploy deploy-service deploy-telemetry-service deploy-job deploy-jobs deploy-all deploy-ci run-job smoke smoke-telemetry apply-bq-eml-viewer clean help
+.PHONY: install dev test lint ci verify deploy deploy-service deploy-telemetry-service deploy-job deploy-jobs deploy-all deploy-ci run-job smoke smoke-telemetry apply-bq-eml-viewer apply-bq-linear-bronze-issues clean help
 
 PYTHON ?= python3
 VENV := .venv
@@ -11,6 +11,8 @@ IMAGE ?= $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(SERVICE)/$(SERVICE):latest
 RUNTIME_SA ?= $(SERVICE)-run@$(PROJECT_ID).iam.gserviceaccount.com
 JOB ?=
 ARGS ?=
+
+LINEAR_DATA_BUCKET ?= peq-tools-linear-data
 
 # Per-job Cloud Run settings — extend when adding jobs.
 ifeq ($(JOB),daily-sweep-report)
@@ -41,6 +43,7 @@ help:
 	@echo "  smoke          Hit /health on deployed Cloud Run service"
 	@echo "  smoke-telemetry  Hit /health on eml-viewer-telemetry (no auth)"
 	@echo "  apply-bq-eml-viewer  Create eml_viewer gold views in BigQuery"
+	@echo "  apply-bq-linear-bronze-issues  Create linear_bronze issues external table + view"
 	@echo "  daily-sweep-report  Run daily Linear sweep report locally (dry-run default)"
 	@echo "  linear-ingest       Run linear bronze ingest locally (incremental dry-run default)"
 	@echo "  docs-daily-sweep    Generate daily-sweep-report PDF guide"
@@ -216,6 +219,20 @@ apply-bq-eml-viewer:
 		echo "Applying $$f"; \
 		bq query --use_legacy_sql=false --project_id="$(PROJECT_ID)" < "$$f"; \
 	done
+
+apply-bq-linear-bronze-issues:
+	@test -n "$(PROJECT_ID)" || (echo "Set PROJECT_ID or gcloud config project" && exit 1)
+	@URIS=$$(gsutil ls -d "gs://$(LINEAR_DATA_BUCKET)/bronze/*/run_*/issues/" 2>/dev/null \
+		| sed 's|$$|page_*.json|' \
+		| sed "s/^/'/; s/$$/'/" \
+		| paste -sd, -); \
+	test -n "$$URIS" || (echo "No issue bronze paths under gs://$(LINEAR_DATA_BUCKET)/bronze/" && exit 1); \
+	echo "Applying issues_pages ($$(echo "$$URIS" | tr ',' '\n' | wc -l | tr -d ' ') run URI(s))"; \
+	sed "s|__GCS_URIS__|$$URIS|" infra/bigquery/linear/bronze/issues_pages.sql \
+		| bq query --use_legacy_sql=false --project_id="$(PROJECT_ID)"
+	@echo "Applying infra/bigquery/linear/bronze/issues.sql"
+	@bq query --use_legacy_sql=false --project_id="$(PROJECT_ID)" \
+		< infra/bigquery/linear/bronze/issues.sql
 
 clean:
 	rm -rf $(VENV) .pytest_cache .ruff_cache
